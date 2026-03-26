@@ -2,10 +2,10 @@ import os
 import subprocess
 
 # List with the station codes for download
-folders_to_download = ["MGBH"]
+folders_to_download = ["MGMC","MGBH"]
 
-base_download_dir = r"C:\Users\rafam\Desktop\IC_GNSS\EstudoGNSS\dados"                     # Directory where the file will be saved
-local_wget = r"C:\Users\rafam\Desktop\IC_GNSS\EstudoGNSS\wget.exe"  # Location where wget is installed
+base_download_dir = r"C:\Users\RafaelLuizGonçalvesS\Desktop\PesquisaDadosGNSS\data\dados_gnss"                     # Directory where the file will be saved
+local_wget = r"C:\Users\RafaelLuizGonçalvesS\Desktop\PesquisaDadosGNSS\EstudoGNSS\wget.exe"  # Location where wget is installed
 
 # Configuration options
 APAGAR = 1  # Set to 1 to delete old .zip files, 0 to keep them
@@ -35,7 +35,7 @@ def delete_old_zip_files(directory):
 for folder_name in folders_to_download:
     # Constructs the full path using the base directory
     output_dir = os.path.join(base_download_dir, folder_name)
-    base_url = f"https://geodesy.unr.edu/gps_timeseries/trop/{folder_name}/"
+    base_url = f"https://geodesy.unr.edu/gps_timeseries/IGS20/trop/{folder_name}/"
 
     # Delete old files if APAGAR is set to 1
     if APAGAR:
