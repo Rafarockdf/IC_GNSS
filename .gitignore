@@ -4,3 +4,4 @@ Compartilhar/Compartilhar/media_TRWET_por_arquivo.csv
 src/__pycache__
 venv
 *.csv
+*.trop
