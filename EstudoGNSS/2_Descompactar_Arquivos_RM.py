@@ -4,10 +4,10 @@ import shutil
 import gzip
 
 # List with the station codes for download
-folders_to_download = ["MGBH"]
+folders_to_download = ["MGBH","MGMC"]
 
 # Path to the main folder
-base_download_dir = r"C:\Users\RafaelLuizGonçalvesS\Desktop\PesquisaDadosGNSS\data\dados_gnss"
+base_download_dir = r"/home/rafael-luiz/Desktop/IC_gnss/database/dados_gnss"
 base_dir = os.path.join(base_download_dir)
 # Function to extract .gz files
 def extract_gz(file_path, extract_to):

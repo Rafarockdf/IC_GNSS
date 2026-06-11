@@ -2,10 +2,10 @@ import os
 import subprocess
 
 # List with the station codes for download
-folders_to_download = ["MGMC","MGBH"]
+folders_to_download = ["MGMC","MGBH","MGJF"]
 
-base_download_dir = r"C:\Users\RafaelLuizGonçalvesS\Desktop\PesquisaDadosGNSS\data\dados_gnss"                     # Directory where the file will be saved
-local_wget = r"C:\Users\RafaelLuizGonçalvesS\Desktop\PesquisaDadosGNSS\EstudoGNSS\wget.exe"  # Location where wget is installed
+base_download_dir = r"/home/rafael-luiz/Desktop/IC_gnss/database/dados_gnss"                     # Directory where the file will be saved
+local_wget = r"/home/rafael-luiz/Desktop/IC_gnss/EstudoGNSS/wget.exe"  # Location where wget is installed
 
 # Configuration options
 APAGAR = 1  # Set to 1 to delete old .zip files, 0 to keep them
