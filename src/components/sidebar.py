@@ -106,6 +106,7 @@ def sidebar_about():
         - 📊 Visualização de séries temporais
         - 📈 Análise de correlação
         - 🔍 Decomposição temporal
+        - 🌦️ Climatologia e anomalias (Z-score)
         - 📉 Estatísticas descritivas
         
         Desenvolvido para análise de dados de estações GNSS do Brasil.

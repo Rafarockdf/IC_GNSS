@@ -7,11 +7,20 @@ import os
 from pathlib import Path
 
 # Caminhos
-BASE_DIR = Path(__file__).parent.parent.parent
+BASE_DIR = Path(__file__).parent.parent
 SRC_DIR = Path(__file__).parent
 DATABASE_DIR = BASE_DIR / "database"
 DADOS_DIR = BASE_DIR / "database" / "dados_gnss"
 DADOS_INMET_DIR = BASE_DIR / "database" / "dados_inmet"
+
+# Diretórios onde procurar arquivos brutos do INMET (portal INMET, ; separado, latin1)
+INMET_SEARCH_DIRS = [
+    DADOS_INMET_DIR,
+    BASE_DIR / "EstudoGNSS",
+]
+
+# Cache de dados processados (evita reprocessar os arquivos .trop a cada execução)
+CACHE_DIR = DATABASE_DIR / "cache"
 
 # Configuração do banco de dados
 DB_PATH = DATABASE_DIR / "gnss.db"
