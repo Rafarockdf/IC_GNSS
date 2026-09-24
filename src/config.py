@@ -30,6 +30,7 @@ DB_PATH_STRING = str(DB_PATH)
 ESTACOES = {
     "MGBH": "Belo Horizonte",
     "MGMC": "Montes Claros",
+    "MGJF": "Juiz de Fora",
 }
 
 # Configuração de estilo

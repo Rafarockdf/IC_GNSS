@@ -29,12 +29,12 @@ def correlate_data(
         Tuple[float, float]: (correlação, p-value)
     """
     try:
-        # Remove NaN values
-        valid_mask = df[[col1, col2]].notna().all(axis=1)
-        col1_data = df.loc[valid_mask, col1]
-        col2_data = df.loc[valid_mask, col2]
+        values = df[[col1, col2]].apply(pd.to_numeric, errors="coerce")
+        valid_mask = values.notna().all(axis=1) & np.isfinite(values).all(axis=1)
+        col1_data = values.loc[valid_mask, col1]
+        col2_data = values.loc[valid_mask, col2]
         
-        if len(col1_data) < 2:
+        if len(col1_data) < 2 or col1_data.nunique() < 2 or col2_data.nunique() < 2:
             return np.nan, np.nan
         
         if method == "spearman":
@@ -67,17 +67,19 @@ def decompose_series(
         dict: Dicionário com trend, seasonal, residual
     """
     try:
-        # Remove NaN values
-        series = df[column].dropna()
+        series = pd.to_numeric(df[column], errors="coerce")
+        series = series.replace([np.inf, -np.inf], np.nan).dropna()
+        if isinstance(series.index, pd.DatetimeIndex):
+            series = series.sort_index()
         
-        if len(series) < 2 * period:
+        if period < 2 or len(series) < 2 * period:
             return None
         
         decomposition = seasonal_decompose(
             series,
             model=model,
             period=period,
-            extrapolate='fill_ea'
+            extrapolate_trend='freq'
         )
         
         return {

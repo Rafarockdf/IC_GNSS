@@ -36,7 +36,7 @@ def render_decomposition():
     try:
         # Carregar dados
         with st.spinner("📥 Carregando dados..."):
-            data = load_troposphere_data(
+            data, _, _ = load_troposphere_data(
                 station=filters['station'],
                 start_date=filters['start_date'].strftime('%Y-%m-%d'),
                 end_date=filters['end_date'].strftime('%Y-%m-%d')

@@ -136,12 +136,12 @@ def render_climatologia():
         st.caption("Média histórica ± desvio-padrão de TRWET por período do ano (dia/semana/mês).")
 
         fig, ax = plt.subplots(figsize=(13, 5))
-        x = perfil.index.to_numpy()
-        labels_x = period_labels(resolucao, x)
+        x = np.arange(len(perfil))
+        labels_x = period_labels(resolucao, perfil.index)
 
-        ax.plot(labels_x, perfil["media"], color="steelblue", label="Média climatológica", linewidth=2)
+        ax.plot(x, perfil["media"], color="steelblue", label="Média climatológica", linewidth=2)
         ax.fill_between(
-            labels_x,
+            x,
             perfil["media"] - perfil["desvio_padrao"],
             perfil["media"] + perfil["desvio_padrao"],
             color="steelblue",
@@ -153,7 +153,7 @@ def render_climatologia():
             ano_int = int(ano_selecionado)
             serie_ano = anomaly_df[anomaly_df["ano"] == ano_int].set_index("periodo")["valor"]
             serie_ano = serie_ano.reindex(perfil.index)
-            ax.plot(labels_x, serie_ano.values, color="darkorange", marker="o", markersize=3,
+            ax.plot(x, serie_ano.values, color="darkorange", marker="o", markersize=3,
                      linewidth=1.5, label=f"Ano {ano_int}")
 
         ax.set_xlabel(resolucao)
@@ -161,12 +161,13 @@ def render_climatologia():
         ax.set_title(f"Climatologia de TRWET ({resolucao}) - {station}")
         ax.legend()
         ax.grid(True, alpha=0.3)
-        if resolucao != "Mensal":
-            step = max(1, len(labels_x) // 30)
-            ax.set_xticks(range(0, len(labels_x), step))
-            ax.set_xticklabels([labels_x[i] for i in range(0, len(labels_x), step)], rotation=90)
-        plt.tight_layout()
+        step = max(1, len(labels_x) // (12 if resolucao == "Mensal" else 15))
+        tick_positions = np.arange(0, len(labels_x), step)
+        ax.set_xticks(tick_positions)
+        ax.set_xticklabels([labels_x[i] for i in tick_positions], rotation=45, ha="right")
+        fig.tight_layout()
         st.pyplot(fig)
+        plt.close(fig)
 
         with st.expander("📋 Tabela do perfil climatológico"):
             tabela = perfil.copy()
@@ -187,16 +188,20 @@ def render_climatologia():
             eixo_x = anomaly_view.index.strftime(
                 "%d/%m/%Y" if resolucao != "Mensal" else "%m/%Y"
             )
-            ax.bar(eixo_x, anomaly_view["zscore"], color=cores, width=0.7, edgecolor="black", alpha=0.75)
+            posicoes = np.arange(len(anomaly_view))
+            ax.bar(posicoes, anomaly_view["zscore"], color=cores, width=0.7, edgecolor="black", alpha=0.75)
             ax.axhline(0, color="black", linewidth=1.2)
             ax.set_title(f"Anomalia Padronizada de TRWET (Z-score) - {station} - {resolucao}")
             ax.set_xlabel("Período")
             ax.set_ylabel("Desvios-padrão (Z)")
             ax.grid(axis="y", linestyle="--", alpha=0.4)
-            ax.xaxis.set_major_locator(plt.MaxNLocator(25))
-            plt.xticks(rotation=90)
-            plt.tight_layout()
+            step = max(1, len(eixo_x) // 15)
+            tick_positions = np.arange(0, len(eixo_x), step)
+            ax.set_xticks(tick_positions)
+            ax.set_xticklabels([eixo_x[i] for i in tick_positions], rotation=45, ha="right")
+            fig.tight_layout()
             st.pyplot(fig)
+            plt.close(fig)
 
         if ano_selecionado == "Todos os anos" and resolucao in ("Mensal", "Semanal"):
             st.markdown(f"**Heatmap Ano x {resolucao}**")
@@ -216,8 +221,9 @@ def render_climatologia():
             ax2.set_title(f"Heatmap de Anomalias (Z-score TRWET) - {station}")
             ax2.set_xlabel(resolucao)
             ax2.set_ylabel("Ano")
-            plt.tight_layout()
+            fig2.tight_layout()
             st.pyplot(fig2)
+            plt.close(fig2)
         elif ano_selecionado == "Todos os anos":
             st.caption(
                 "O heatmap Ano x Período fica muito denso na resolução diária "
@@ -272,8 +278,9 @@ def render_climatologia():
                 ax3.set_xlabel("Anomalia Padronizada do ZWD")
                 ax3.set_ylabel("Anomalia Padronizada da Precipitação")
                 ax3.grid(True, alpha=0.3)
-                plt.tight_layout()
+                fig3.tight_layout()
                 st.pyplot(fig3)
+                plt.close(fig3)
 
                 st.markdown(f"**Correlação com defasagem (lag = 0 a {lag_max_ui} {resolucao.lower()})**")
                 lag_df = lag_correlation(merged, max_lag=lag_max_ui, method=metodo)
@@ -284,10 +291,14 @@ def render_climatologia():
                 ax4.set_title(f"Correlação ({metodo}) com Defasagem — lag selecionado destacado")
                 ax4.set_xlabel(f"Defasagem ({resolucao.lower()})")
                 ax4.set_ylabel("Coeficiente de Correlação (R)")
-                ax4.set_xticks(lag_df["lag"])
+                lag_ticks = lag_df["lag"]
+                if len(lag_ticks) > 15:
+                    lag_ticks = lag_ticks.iloc[::max(1, len(lag_ticks) // 15)]
+                ax4.set_xticks(lag_ticks)
                 ax4.grid(axis="y", linestyle="--", alpha=0.3)
-                plt.tight_layout()
+                fig4.tight_layout()
                 st.pyplot(fig4)
+                plt.close(fig4)
 
                 linha_lag = lag_df[lag_df["lag"] == lag].iloc[0]
                 st.info(
@@ -312,8 +323,9 @@ def render_climatologia():
                     )
                     ax5.set_xlabel("Z-score Precipitação (INMET)")
                     ax5.set_ylabel("Z-score ZWD (GNSS)")
-                    plt.tight_layout()
+                    fig5.tight_layout()
                     st.pyplot(fig5)
+                    plt.close(fig5)
                 with cc2:
                     st.metric("Total de períodos analisados", total)
                     st.metric("Sinais concordantes", concordancia)

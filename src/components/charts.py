@@ -3,12 +3,13 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
-from typing import Optional
+from typing import Optional, Union
 
 
 def plot_time_series(
-    df: pd.DataFrame,
+    df: Union[pd.DataFrame, pd.Series],
     date_column: str = "data_completa",
     value_column: str = "TRWET",
     title: str = "Série Temporal",
@@ -19,7 +20,7 @@ def plot_time_series(
     Plota uma série temporal.
     
     Args:
-        df (pd.DataFrame): DataFrame com os dados
+        df (pd.DataFrame | pd.Series): Dados da série temporal
         date_column (str): Nome da coluna de datas
         value_column (str): Nome da coluna com valores
         title (str): Título do gráfico
@@ -27,14 +28,30 @@ def plot_time_series(
         smooth_line (pd.Series): Série suavizada (opcional)
     """
     try:
-        date_column = df.index
-        value_column = df.values
+        if isinstance(df, pd.Series):
+            dates = pd.to_datetime(df.index, errors="coerce")
+            values = pd.to_numeric(df, errors="coerce")
+            ylabel = df.name or "Valor"
+        else:
+            if date_column in df.columns:
+                dates = pd.to_datetime(df[date_column], errors="coerce")
+            else:
+                dates = pd.to_datetime(df.index, errors="coerce")
+            values = pd.to_numeric(df[value_column], errors="coerce")
+            ylabel = value_column
+
+        series = pd.Series(values.to_numpy(), index=dates).dropna()
+        series = series[~series.index.isna()].sort_index()
+        if series.empty:
+            st.warning("Não há dados válidos para plotar a série temporal.")
+            return
+
         fig, ax = plt.subplots(figsize=figsize)
         
         # Plota dados originais
         ax.plot(
-            df.index,
-            df.values,
+            series.index,
+            series.values,
             label="Dados Originais",
             alpha=0.7,
             linewidth=1
@@ -42,23 +59,27 @@ def plot_time_series(
         
         # Plota linha suavizada se fornecida
         if smooth_line is not None:
+            smooth = pd.to_numeric(smooth_line, errors="coerce").reindex(series.index)
             ax.plot(
-                df.index,
-                smooth_line,
+                series.index,
+                smooth,
                 label="Suavizado",
                 linewidth=2,
                 color="red"
             )
         
         ax.set_xlabel("Data")
-        ax.set_ylabel(value_column)
+        ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.legend()
         ax.grid(True, alpha=0.3)
-        plt.xticks(rotation=45)
-        plt.tight_layout()
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=4, maxticks=10))
+        ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+        fig.autofmt_xdate(rotation=30, ha="right")
+        fig.tight_layout()
         
         st.pyplot(fig)
+        plt.close(fig)
     except Exception as e:
         st.error(f"Erro ao plotar série temporal: {e}")
 
@@ -84,9 +105,16 @@ def plot_correlation_matrix(
             st.warning("É necessário selecionar pelo menos 2 colunas numéricas")
             return
         
-        corr_matrix = df[columns].corr()
+        valid_columns = [column for column in columns if column in df.columns]
+        corr_matrix = df[valid_columns].apply(pd.to_numeric, errors="coerce").corr()
+        corr_matrix = corr_matrix.dropna(axis=0, how="all").dropna(axis=1, how="all")
+
+        if corr_matrix.shape[0] < 2:
+            st.warning("Não há pelo menos duas colunas com dados válidos para correlacionar.")
+            return
         
-        fig, ax = plt.subplots(figsize=figsize)
+        size = max(figsize[0], min(16, 2 + corr_matrix.shape[1] * 1.2))
+        fig, ax = plt.subplots(figsize=(size, max(figsize[1], size * 0.8)))
         sns.heatmap(
             corr_matrix,
             annot=True,
@@ -97,9 +125,10 @@ def plot_correlation_matrix(
             cbar_kws={"label": "Correlação"}
         )
         ax.set_title("Matriz de Correlação")
-        plt.tight_layout()
+        fig.tight_layout()
         
         st.pyplot(fig)
+        plt.close(fig)
     except Exception as e:
         st.error(f"Erro ao plotar matriz de correlação: {e}")
 
@@ -116,35 +145,37 @@ def plot_decomposition(
         figsize (tuple): Tamanho da figura
     """
     try:
-        fig, axes = plt.subplots(4, 1, figsize=figsize)
+        fig, axes = plt.subplots(4, 1, figsize=figsize, sharex=True)
         
         # Série original
         axes[0].plot(decomposition['observed'], label='Original', color='blue')
         axes[0].set_ylabel('Original')
-        axes[0].legend()
         axes[0].grid(True, alpha=0.3)
         
         # Tendência
         axes[1].plot(decomposition['trend'], label='Tendência', color='orange')
         axes[1].set_ylabel('Tendência')
-        axes[1].legend()
         axes[1].grid(True, alpha=0.3)
         
         # Sazonalidade
         axes[2].plot(decomposition['seasonal'], label='Sazonalidade', color='green')
         axes[2].set_ylabel('Sazonalidade')
-        axes[2].legend()
         axes[2].grid(True, alpha=0.3)
         
         # Resíduos
         axes[3].plot(decomposition['residual'], label='Resíduos', color='red')
         axes[3].set_ylabel('Resíduos')
-        axes[3].set_xlabel('Índice de Tempo')
-        axes[3].legend()
+        axes[3].set_xlabel('Data')
         axes[3].grid(True, alpha=0.3)
         
-        plt.tight_layout()
+        if isinstance(decomposition['observed'].index, pd.DatetimeIndex):
+            locator = mdates.AutoDateLocator(minticks=4, maxticks=10)
+            axes[3].xaxis.set_major_locator(locator)
+            axes[3].xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+            fig.autofmt_xdate(rotation=30, ha="right")
+        fig.tight_layout()
         st.pyplot(fig)
+        plt.close(fig)
     except Exception as e:
         st.error(f"Erro ao plotar decomposição: {e}")
 

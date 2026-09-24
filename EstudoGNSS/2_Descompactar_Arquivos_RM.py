@@ -4,7 +4,7 @@ import shutil
 import gzip
 
 # List with the station codes for download
-folders_to_download = ["MGBH","MGMC"]
+folders_to_download = ["MGBH","MGMC","MGJF"]
 
 # Path to the main folder
 base_download_dir = r"C:\Users\rafam\OneDrive\Área de Trabalho\PesquisaGNSS\database\dados_gnss"

@@ -30,11 +30,9 @@ if not exist "..\venv" (
     python -m venv ..\venv
 )
 
-call ..\venv\Scripts\activate.bat
-
 REM Instalar dependências
 echo ⚠ Instalando/atualizando dependências...
-pip install -q -r requirements.txt
+..\venv\Scripts\python.exe -m pip install -q -r requirements.txt
 
 if %errorlevel% neq 0 (
     echo Erro ao instalar dependências
@@ -53,7 +51,7 @@ echo Para sair, pressione: Ctrl+C
 echo.
 
 REM Executar a aplicação
-streamlit run app.py
+..\venv\Scripts\python.exe -m streamlit run app.py
 
 call ..\venv\Scripts\deactivate.bat
 pause

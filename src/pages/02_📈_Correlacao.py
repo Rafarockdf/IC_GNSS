@@ -36,7 +36,7 @@ def render_correlation_analysis():
     try:
         # Carregar dados
         with st.spinner("📥 Carregando dados..."):
-            trop_data = load_troposphere_data(
+            trop_data, _, _ = load_troposphere_data(
                 station=filters['station'],
                 start_date=filters['start_date'].strftime('%Y-%m-%d'),
                 end_date=filters['end_date'].strftime('%Y-%m-%d')
@@ -133,42 +133,48 @@ def render_correlation_analysis():
             col1, col2 = st.columns(2)
             
             numeric_cols = trop_data.select_dtypes(include=[np.number]).columns.tolist() if not trop_data.empty else []
-            
-            with col1:
-                col1_name = st.selectbox(
-                    "Selecione primeira coluna",
-                    numeric_cols,
-                    key="col1_select"
-                )
-            
-            with col2:
-                col2_name = st.selectbox(
-                    "Selecione segunda coluna",
-                    numeric_cols,
-                    key="col2_select"
-                )
-            
-            if col1_name and col2_name and not trop_data.empty:
-                corr, pvalue = correlate_data(
-                    trop_data,
-                    col1_name,
-                    col2_name,
-                    method=filters['correlation_method']
-                )
-                
-                col1, col2, col3 = st.columns(3)
-                
+
+            if len(numeric_cols) < 2:
+                st.warning("⚠️ São necessárias pelo menos duas colunas numéricas para esta análise.")
+            else:
                 with col1:
-                    st.metric("Correlação", f"{corr:.4f}")
-                
+                    col1_name = st.selectbox(
+                        "Selecione primeira coluna",
+                        numeric_cols,
+                        key="col1_select"
+                    )
+
                 with col2:
-                    st.metric("P-value", f"{pvalue:.6f}")
+                    col2_name = st.selectbox(
+                        "Selecione segunda coluna",
+                        numeric_cols,
+                        index=1,
+                        key="col2_select"
+                    )
+
+                if col1_name != col2_name:
+                    corr, pvalue = correlate_data(
+                        trop_data,
+                        col1_name,
+                        col2_name,
+                        method=filters['correlation_method']
+                    )
                 
-                with col3:
-                    if pvalue < 0.05:
-                        st.success("✅ Significativo (p < 0.05)")
-                    else:
-                        st.warning("⚠️ Não significativo (p ≥ 0.05)")
+                    col1, col2, col3 = st.columns(3)
+                
+                    with col1:
+                        st.metric("Correlação", f"{corr:.4f}")
+                
+                    with col2:
+                        st.metric("P-value", f"{pvalue:.6f}")
+                
+                    with col3:
+                        if pvalue < 0.05:
+                            st.success("✅ Significativo (p < 0.05)")
+                        else:
+                            st.warning("⚠️ Não significativo (p ≥ 0.05)")
+                else:
+                    st.warning("⚠️ Selecione duas colunas diferentes.")
     
     except Exception as e:
         st.error(f"❌ Erro na análise: {e}")
